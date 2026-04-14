@@ -547,7 +547,7 @@ After running `train_model.py`, the following files are saved to `backend/models
 ## 🧑‍💻 Authors
 
 | Name | Institution |
-|---|---|
+|---|---|---|
 | **Kartik G** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560072 |
 | **Kalavathi V A** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560072 |
 | **Pruthvi N K** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560072 |
