@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    @apply bg-ink text-cream font-body min-h-screen relative overflow-x-hidden;
+    -webkit-font-smoothing: antialiased;
+    background: linear-gradient(135deg, #0D0F14, #1A1D26);
+  }
+
+  /* Glassmorphism Background elements */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: -1;
+    opacity: 0.25;
+  }
+
+  body::before {
+    top: -20%;
+    left: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: #5B8AF0;
+    animation: drift 20s infinite alternate linear;
+  }
+
+  body::after {
+    bottom: -20%;
+    right: -10%;
+    width: 70vw;
+    height: 70vw;
+    background: #E8A030;
+    animation: drift2 25s infinite alternate linear;
+  }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(10%, 10%) scale(1.1); }
+  }
+  @keyframes drift2 {
+    0% { transform: translate(0, 0) scale(1.1); }
+    100% { transform: translate(-10%, -10%) scale(1); }
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(26, 29, 38, 0.2); }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 9999px; border: 1px solid rgba(255,255,255,0.05); }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+}
+
+@layer components {
+  .card {
+    background: rgba(26, 29, 38, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    @apply rounded-xl p-6;
+  }
+
+  .btn-primary {
+    background: rgba(91, 138, 240, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(91, 138, 240, 0.2);
+    @apply hover:bg-blue-500 text-white font-display font-semibold
+           px-6 py-3 rounded-lg transition-all duration-300
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    @apply hover:bg-white/10 text-ghost hover:text-cream
+           px-4 py-2 rounded-lg transition-all duration-300 text-sm;
+  }
+
+  .btn-glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    @apply hover:bg-white/10 text-ghost hover:text-cream font-medium
+           px-4 py-2 rounded-lg transition-all duration-200 text-sm
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .input-field {
+    background: rgba(34, 38, 58, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    @apply rounded-lg px-4 py-2.5 text-cream
+           text-sm font-mono placeholder:text-muted
+           focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/50
+           transition-all duration-300 w-full;
+  }
+
+  .label {
+    @apply text-ghost text-xs font-display font-medium uppercase tracking-widest mb-1.5 block;
+  }
+
+  .risk-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-display font-semibold;
+  }
+
+  .section-title {
+    @apply font-display font-bold text-cream;
+  }
+}
+
+.animate-stagger > * {
+  opacity: 0;
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.animate-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
