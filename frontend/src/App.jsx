@@ -49,7 +49,6 @@ export default function App() {
             <Route path="/insights"       element={<ModelInsights />} />
             <Route path="/whatif"         element={<WhatIf />} />
             <Route path="/threshold"      element={<ThresholdOptimizer />} />
-            {/* New v4 pages */}
             <Route path="/students/:studentId" element={<StudentDetail />} />
             <Route path="/fairness"       element={<FairnessAudit />} />
             <Route path="/counterfactuals" element={<Counterfactuals />} />

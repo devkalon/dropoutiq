@@ -17,7 +17,6 @@ function authHeaders(token) {
 }
 
 export const api = {
-  // ── Predictions ──────────────────────────────────────────────────────────
   async predict(data, token) {
     return request('/predict', { method: 'POST', headers: authHeaders(token), body: JSON.stringify(data) })
   },
@@ -31,7 +30,6 @@ export const api = {
     return request(`/predictions/history?limit=${limit}&offset=${offset}`, { headers: authHeaders(token) })
   },
 
-  // ── Analytics ────────────────────────────────────────────────────────────
   async getSummary(token) {
     return request('/analytics/summary', { headers: authHeaders(token) })
   },
@@ -54,7 +52,6 @@ export const api = {
     return request('/analytics/risk-timeline', { method: 'POST', headers: authHeaders(token), body: JSON.stringify(entry) })
   },
 
-  // ── Model insights ───────────────────────────────────────────────────────
   async getComparison(token) {
     return request('/model/comparison', { headers: authHeaders(token) })
   },
@@ -86,7 +83,6 @@ export const api = {
     return request('/model/survival', { headers: authHeaders(token) })
   },
 
-  // ── Students ─────────────────────────────────────────────────────────────
   async searchStudents(token, q, limit = 20) {
     return request(`/students/search?q=${encodeURIComponent(q)}&limit=${limit}`, { headers: authHeaders(token) })
   },
@@ -94,7 +90,6 @@ export const api = {
     return request(`/students/${encodeURIComponent(studentId)}`, { headers: authHeaders(token) })
   },
 
-  // ── Counterfactuals ──────────────────────────────────────────────────────
   async getCounterfactuals(token, studentData, desiredOutcome = 'Graduate', numCfs = 3) {
     return request('/counterfactual', {
       method: 'POST', headers: authHeaders(token),
@@ -102,7 +97,6 @@ export const api = {
     })
   },
 
-  // ── Alerts ───────────────────────────────────────────────────────────────
   async sendAlert(token, alertData) {
     return request('/alerts/send', { method: 'POST', headers: authHeaders(token), body: JSON.stringify(alertData) })
   },
@@ -110,7 +104,6 @@ export const api = {
     return request(`/alerts/history?limit=${limit}`, { headers: authHeaders(token) })
   },
 
-  // ── Active Learning ──────────────────────────────────────────────────────
   async getUncertainPredictions(token, limit = 20) {
     return request(`/active-learning/uncertain?limit=${limit}`, { headers: authHeaders(token) })
   },
@@ -124,12 +117,10 @@ export const api = {
     return request('/active-learning/stats', { headers: authHeaders(token) })
   },
 
-  // ── Role ─────────────────────────────────────────────────────────────────
   async getMyRole(token) {
     return request('/me/role', { headers: authHeaders(token) })
   },
 
-  // ── PDF ──────────────────────────────────────────────────────────────────
   async downloadPdfInstant(studentData, token) {
     const res = await fetch(`${BASE}/predict/pdf/instant`, {
       method: 'POST', headers: authHeaders(token), body: JSON.stringify(studentData)

@@ -1,22 +1,4 @@
-"""
-Student Dropout Prediction API  —  DropoutIQ v4
-================================================
-NEW in v4:
-  GET  /analytics/summary           - Fast count-based dashboard stats
-  GET  /me/role                     - Current user's role (admin/advisor)
-  GET  /students/search?q=          - Search students by name/ID
-  GET  /students/{student_id}       - Full student profile (history + analytics)
-  GET  /model/shap-interactions     - SHAP interaction heatmap data
-  GET  /model/survival              - Per-cohort survival curves
-  GET  /analytics/fairness          - Fairlearn demographic parity metrics
-  GET  /analytics/risk-timeline/{student_id}  - Time-series risk history
-  POST /analytics/risk-timeline     - Save semester risk snapshot
-  POST /counterfactual              - DiCE counterfactual explanations
-  POST /alerts/send                 - Email/Slack alert for a student
-  GET  /alerts/history              - Alert log
-  GET  /active-learning/uncertain   - 20 most uncertain predictions
-  POST /active-learning/label       - Submit human label
-"""
+
 
 from fastapi import FastAPI, Depends, HTTPException, status, Response, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -151,7 +133,6 @@ LABEL_MAPS = {
 }
 LABEL_MAPS["fathers_occupation"] = LABEL_MAPS["mothers_occupation"]
 
-# ── Load ML artefacts ─────────────────────────────────────────────────────────
 MODEL_PATH     = os.getenv("MODEL_PATH",     "models/dropout_model.pkl")
 SCALER_PATH    = os.getenv("SCALER_PATH",    "models/scaler.pkl")
 LABEL_ENC_PATH = os.getenv("LABEL_ENCODER_PATH", "models/label_encoder.pkl")
@@ -179,14 +160,12 @@ try:
     with open(CHAMPION_PATH) as f: champion_name=f.read().strip()
 except: pass
 
-# ── Supabase ──────────────────────────────────────────────────────────────────
 SUPABASE_URL=os.getenv("SUPABASE_URL",""); SUPABASE_KEY=os.getenv("SUPABASE_SERVICE_KEY","")
 supabase: Optional[Client]=None
 if SUPABASE_URL and SUPABASE_KEY:
     try: supabase=create_client(SUPABASE_URL,SUPABASE_KEY)
     except Exception as e: logger.error(f"Supabase init failed: {e}")
 
-# ── Email / Slack (optional) ──────────────────────────────────────────────────
 SMTP_HOST=os.getenv("SMTP_HOST","smtp.gmail.com")
 SMTP_PORT=int(os.getenv("SMTP_PORT","587"))
 SMTP_USER=os.getenv("SMTP_USER","")
@@ -194,7 +173,6 @@ SMTP_PASS=os.getenv("SMTP_PASS","")
 SMTP_FROM=os.getenv("SMTP_FROM","")
 SLACK_WEBHOOK=os.getenv("SLACK_WEBHOOK","")
 
-# ── Clerk JWT ─────────────────────────────────────────────────────────────────
 CLERK_JWKS_URL=os.getenv("CLERK_JWKS_URL",""); CLERK_ISSUER=os.getenv("CLERK_ISSUER","")
 _jwks_cache: dict={}
 
@@ -234,7 +212,6 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials=Depends(sec
         except:
             return {"user_id": "anonymous", "token": token}
 
-# ── Schemas ───────────────────────────────────────────────────────────────────
 class StudentInput(BaseModel):
     marital_status: int=Field(...,ge=1,le=6)
     age_at_enrollment: int=Field(...,ge=15,le=70)
@@ -305,12 +282,12 @@ class AlertRequest(BaseModel):
     student_name: Optional[str] = None
     risk_level: str
     dropout_probability: float
-    channel: str = "email"  # "email" | "slack"
-    recipient: Optional[str] = None  # email address
+    channel: str = "email"
+    recipient: Optional[str] = None
 
 class ActiveLearningLabel(BaseModel):
     prediction_id: str
-    true_label: str  # "Dropout" | "Graduate"
+    true_label: str
     notes: Optional[str] = None
 
 class CounterfactualRequest(BaseModel):
@@ -318,7 +295,6 @@ class CounterfactualRequest(BaseModel):
     desired_outcome: str = "Graduate"
     num_counterfactuals: int = Field(3, ge=1, le=5)
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
 def extract_feature_vector(s: StudentInput) -> np.ndarray:
     d=s.dict(); return np.array([[d[f] for f in FEATURE_ORDER]])
 
@@ -458,10 +434,6 @@ def _generate_pdf_report(student_name, student_id, prediction, dropout_prob, ris
         lines += ["","RECOMMENDATION","-"*30,recommendation]
         return "\n".join(lines).encode("utf-8"), "text/plain"
 
-# ═══════════════════════════════════════════════════════════
-#  ENDPOINTS
-# ═══════════════════════════════════════════════════════════
-
 @app.get("/health")
 async def health():
     return {"status":"ok","model_loaded":model is not None,"shap_loaded":shap_explainer is not None,
@@ -469,7 +441,6 @@ async def health():
             "db_connected":supabase is not None,"clerk_jwks_configured":bool(CLERK_JWKS_URL),
             "version":"4.0.0"}
 
-# ── Role management ────────────────────────────────────────────────────────────
 @app.get("/me/role")
 async def get_my_role(user=Depends(get_current_user)):
     user_id = user.get("user_id", "anonymous")
@@ -479,7 +450,6 @@ async def get_my_role(user=Depends(get_current_user)):
         result = supabase.table("user_roles").select("role").eq("user_id", user_id).execute()
         if result.data:
             return {"role": result.data[0]["role"], "user_id": user_id}
-        # Default new users to advisor
         supabase.table("user_roles").insert({"user_id": user_id, "role": "advisor"}).execute()
         return {"role": "advisor", "user_id": user_id}
     except Exception as e:
@@ -488,11 +458,9 @@ async def get_my_role(user=Depends(get_current_user)):
 
 @app.put("/me/role")
 async def set_user_role(body: dict, user=Depends(get_current_user)):
-    """Admin only — set another user's role"""
     caller_id = user.get("user_id", "anonymous")
     if not supabase:
         raise HTTPException(503, "Database not connected")
-    # Check caller is admin
     role_res = supabase.table("user_roles").select("role").eq("user_id", caller_id).execute()
     caller_role = role_res.data[0]["role"] if role_res.data else "advisor"
     if caller_role != "admin":
@@ -502,7 +470,6 @@ async def set_user_role(body: dict, user=Depends(get_current_user)):
     supabase.table("user_roles").upsert({"user_id": target_id, "role": new_role}).execute()
     return {"ok": True, "user_id": target_id, "role": new_role}
 
-# ── Analytics summary (fixes dashboard total count) ────────────────────────────
 @app.get("/analytics/summary")
 async def get_analytics_summary(user=Depends(get_current_user)):
     if not supabase:
@@ -510,7 +477,6 @@ async def get_analytics_summary(user=Depends(get_current_user)):
                 "critical": 0, "high": 0, "medium": 0, "low": 0, "avg_risk": 0}
     user_id = user.get("user_id", "anonymous")
     try:
-        # Use count queries scoped to this user
         total_res = supabase.table("predictions").select("id", count="exact").eq("user_id", user_id).execute()
         total = total_res.count or 0
 
@@ -529,7 +495,6 @@ async def get_analytics_summary(user=Depends(get_current_user)):
         low_res = supabase.table("predictions").select("id", count="exact").eq("user_id", user_id).eq("risk_level", "Low").execute()
         low = low_res.count or 0
 
-        # Get average from a sample (last 1000) scoped to this user
         sample_res = supabase.table("predictions").select("dropout_probability").eq("user_id", user_id).order("created_at", desc=True).limit(1000).execute()
         probs = [p["dropout_probability"] for p in (sample_res.data or [])]
         avg_risk = round(sum(probs) / len(probs) * 100) if probs else 0
@@ -543,7 +508,6 @@ async def get_analytics_summary(user=Depends(get_current_user)):
         logger.error(f"Summary error for {user_id}: {e}")
         raise HTTPException(500, "Failed to load dashboard summary. Please try again.")
 
-# ── Student search ─────────────────────────────────────────────────────────────
 @app.get("/students/search")
 async def search_students(q: str = Query(..., min_length=1), limit: int = 20,
                            user=Depends(get_current_user)):
@@ -551,7 +515,6 @@ async def search_students(q: str = Query(..., min_length=1), limit: int = 20,
         raise HTTPException(503, "Database not connected. Please check your connection.")
     user_id = user.get("user_id", "anonymous")
     try:
-        # Search by student_name OR student_id scoped to this user
         name_res = supabase.table("predictions").select(
             "student_id,student_name,prediction,dropout_probability,risk_level,created_at,intervention_score"
         ).eq("user_id", user_id).ilike("student_name", f"%{q}%").order("created_at", desc=True).limit(limit).execute()
@@ -560,7 +523,6 @@ async def search_students(q: str = Query(..., min_length=1), limit: int = 20,
             "student_id,student_name,prediction,dropout_probability,risk_level,created_at,intervention_score"
         ).eq("user_id", user_id).ilike("student_id", f"%{q}%").order("created_at", desc=True).limit(limit).execute()
 
-        # Merge and deduplicate by student_id
         seen = set()
         results = []
         for p in (name_res.data or []) + (id_res.data or []):
@@ -569,7 +531,6 @@ async def search_students(q: str = Query(..., min_length=1), limit: int = 20,
                 seen.add(key)
                 results.append(p)
 
-        # Group by unique student (latest prediction per student)
         by_student: dict = {}
         for p in results:
             sid = p.get("student_id") or p.get("student_name", "unknown")
@@ -581,21 +542,18 @@ async def search_students(q: str = Query(..., min_length=1), limit: int = 20,
         logger.error(f"Student search error for {user_id}: {e}")
         raise HTTPException(500, "Search failed. Please try again.")
 
-# ── Student detail ─────────────────────────────────────────────────────────────
 @app.get("/students/{student_id}")
 async def get_student_detail(student_id: str, user=Depends(get_current_user)):
     if not supabase:
         raise HTTPException(503, "Database not connected. Please check your connection.")
     user_id = user.get("user_id", "anonymous")
     try:
-        # All predictions for this student scoped to this user
         pred_res = supabase.table("predictions").select("*").eq(
             "user_id", user_id
         ).eq("student_id", student_id).order("created_at", desc=True).execute()
 
         predictions = pred_res.data or []
         if not predictions:
-            # Try by name (still scoped to user)
             pred_res2 = supabase.table("predictions").select("*").eq(
                 "user_id", user_id
             ).ilike("student_name", f"%{student_id}%").order("created_at", desc=True).execute()
@@ -605,12 +563,10 @@ async def get_student_detail(student_id: str, user=Depends(get_current_user)):
             raise HTTPException(404, f"Student '{student_id}' not found in your records. Make sure you have made a prediction for this student.")
 
         latest = predictions[0]
-        # Risk timeline
         timeline_res = supabase.table("risk_timeline").select("*").eq(
             "student_id", student_id
         ).order("semester").execute()
 
-        # Active learning labels
         pred_ids = [str(p["id"]) for p in predictions]
         labels = []
         if pred_ids:
@@ -621,7 +577,6 @@ async def get_student_detail(student_id: str, user=Depends(get_current_user)):
                 labels = label_res.data or []
             except: pass
 
-        # Cohort stats: compare student to same-risk cohort (user-scoped)
         risk_level = latest.get("risk_level", "Unknown")
         cohort_res = supabase.table("predictions").select(
             "dropout_probability"
@@ -629,7 +584,6 @@ async def get_student_detail(student_id: str, user=Depends(get_current_user)):
         cohort_probs = [p["dropout_probability"] for p in (cohort_res.data or [])]
         cohort_avg = round(sum(cohort_probs) / len(cohort_probs), 4) if cohort_probs else 0
 
-        # Risk trend (from prediction history)
         risk_trend = [
             {"date": p["created_at"][:10], "probability": round(p["dropout_probability"] * 100, 1)}
             for p in reversed(predictions)
@@ -655,7 +609,6 @@ async def get_student_detail(student_id: str, user=Depends(get_current_user)):
         logger.error(f"Student detail error for {user_id}/{student_id}: {e}")
         raise HTTPException(500, "Could not load student details. Please try again.")
 
-# ── Model endpoints ────────────────────────────────────────────────────────────
 @app.get("/model/comparison")
 async def model_comparison(user=Depends(get_current_user)):
     import pandas as pd
@@ -726,7 +679,6 @@ async def get_survival_curves(user=Depends(get_current_user)):
     if data is None: raise HTTPException(404,"Survival data not found. Run train_model.py first.")
     return {"survival_curves":data,"champion_model":champion_name}
 
-# ── Predict endpoints ──────────────────────────────────────────────────────────
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(student: StudentInput, user=Depends(get_current_user)):
     user_id = user.get("user_id", "anonymous")
@@ -750,7 +702,6 @@ async def predict(student: StudentInput, user=Depends(get_current_user)):
                  "created_at":timestamp,"intervention_score":intervention_score}
             result=supabase.table("predictions").insert(row).execute()
             prediction_id=result.data[0]["id"] if result.data else None
-            # Save to risk timeline
             if student.student_id:
                 supabase.table("risk_timeline").insert({
                     "student_id": student.student_id,
@@ -859,7 +810,6 @@ async def predict_batch(batch: BatchStudentInput, user=Depends(get_current_user)
             "model_used":champion_name,"decision_threshold":decision_threshold,
             "risk_summary":risk_summary}
 
-# ── History ────────────────────────────────────────────────────────────────────
 @app.get("/predictions/history")
 async def get_history(limit: int=100, offset: int=0, user=Depends(get_current_user)):
     if not supabase: return {"predictions":[],"message":"Database not connected. Please check your configuration."}
@@ -872,7 +822,6 @@ async def get_history(limit: int=100, offset: int=0, user=Depends(get_current_us
         logger.error(f"History error for {user_id}: {e}")
         raise HTTPException(500, "Could not load prediction history. Please try again.")
 
-# ── Analytics ──────────────────────────────────────────────────────────────────
 @app.get("/analytics/intervention-priority")
 async def get_intervention_priority(limit: int=20, user=Depends(get_current_user)):
     if not supabase: raise HTTPException(503,"Database not connected. Please check your configuration.")
@@ -894,7 +843,6 @@ async def get_cohort_analysis(user=Depends(get_current_user)):
     if not supabase: raise HTTPException(503,"Database not connected. Please check your configuration.")
     user_id = user.get("user_id", "anonymous")
     try:
-        # Use count queries per cohort scoped to this user
         order=["Critical","High","Medium","Low"]
         output=[]
         total_res = supabase.table("predictions").select("id", count="exact").eq("user_id", user_id).execute()
@@ -942,7 +890,6 @@ async def get_trends(days: int=30, user=Depends(get_current_user)):
         logger.error(f"Trends error for {user_id}: {e}")
         raise HTTPException(500, "Could not load trend data. Please try again.")
 
-# ── Risk Timeline ──────────────────────────────────────────────────────────────
 @app.get("/analytics/risk-timeline/{student_id}")
 async def get_risk_timeline(student_id: str, user=Depends(get_current_user)):
     if not supabase: raise HTTPException(503,"Database not connected")
@@ -970,7 +917,6 @@ async def add_risk_timeline(entry: RiskTimelineEntry, user=Depends(get_current_u
     except Exception as e:
         raise HTTPException(500, str(e))
 
-# ── Fairness Audit ─────────────────────────────────────────────────────────────
 @app.get("/analytics/fairness")
 async def get_fairness_audit(user=Depends(get_current_user)):
     if not supabase: raise HTTPException(503,"Database not connected. Please check your configuration.")
@@ -984,7 +930,6 @@ async def get_fairness_audit(user=Depends(get_current_user)):
         if len(data) < 10:
             return {"message": "Not enough data for fairness analysis", "metrics": []}
 
-        # Extract sensitive features from input_features
         genders = [p.get("input_features",{}).get("gender",1) for p in data]
         scholarships = [p.get("input_features",{}).get("scholarship_holder",0) for p in data]
         predictions = [1 if p["prediction"]=="Dropout" else 0 for p in data]
@@ -1039,10 +984,8 @@ async def get_fairness_audit(user=Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(500, str(e))
 
-# ── Counterfactuals ────────────────────────────────────────────────────────────
 @app.post("/counterfactual")
 async def get_counterfactuals(req: CounterfactualRequest, user=Depends(get_current_user)):
-    """Generate actionable counterfactual explanations (DiCE-style via gradient search)"""
     try:
         features = extract_feature_vector(req.student_data)
         features_scaled = scaler.transform(features) if scaler else features
@@ -1050,7 +993,6 @@ async def get_counterfactuals(req: CounterfactualRequest, user=Depends(get_curre
         current_prob = float(proba[1]) if len(proba) > 1 else float(proba[0])
         current_pred = "Dropout" if current_prob >= decision_threshold else "Graduate"
 
-        # Actionable features (things a student can change)
         actionable = [
             "tuition_fees_up_to_date", "debtor",
             "curricular_units_1st_sem_enrolled", "curricular_units_1st_sem_approved",
@@ -1063,7 +1005,6 @@ async def get_counterfactuals(req: CounterfactualRequest, user=Depends(get_curre
         counterfactuals = []
         raw = req.student_data.dict()
 
-        # Strategy 1: Fix tuition
         if raw.get("tuition_fees_up_to_date") == 0 and req.desired_outcome == "Graduate":
             cf = raw.copy()
             cf["tuition_fees_up_to_date"] = 1
@@ -1082,7 +1023,6 @@ async def get_counterfactuals(req: CounterfactualRequest, user=Depends(get_curre
                 "action": "Ensure tuition fees are paid on time. Contact financial aid office.",
             })
 
-        # Strategy 2: Improve units approved
         if raw.get("curricular_units_2nd_sem_approved", 0) < 4 and req.desired_outcome == "Graduate":
             cf = raw.copy()
             original = cf["curricular_units_2nd_sem_approved"]
@@ -1109,7 +1049,6 @@ async def get_counterfactuals(req: CounterfactualRequest, user=Depends(get_curre
                 "action": "Attend tutoring sessions and improve academic performance in semester 2.",
             })
 
-        # Strategy 3: Apply for scholarship
         if raw.get("scholarship_holder") == 0 and req.desired_outcome == "Graduate":
             cf = raw.copy()
             cf["scholarship_holder"] = 1
@@ -1132,7 +1071,6 @@ async def get_counterfactuals(req: CounterfactualRequest, user=Depends(get_curre
                 "action": "Apply for scholarship to reduce financial burden. Check eligibility criteria.",
             })
 
-        # If no specific counterfactuals found (student already good), provide general advice
         if not counterfactuals:
             counterfactuals.append({
                 "id": 1,
@@ -1155,7 +1093,6 @@ async def get_counterfactuals(req: CounterfactualRequest, user=Depends(get_curre
     except Exception as e:
         raise HTTPException(500, f"Counterfactual generation failed: {e}")
 
-# ── Alerts ─────────────────────────────────────────────────────────────────────
 @app.post("/alerts/send")
 async def send_alert(req: AlertRequest, background_tasks: BackgroundTasks,
                      user=Depends(get_current_user)):
@@ -1219,14 +1156,11 @@ async def get_alerts_history(limit: int=50, user=Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(500, str(e))
 
-# ── Active Learning ────────────────────────────────────────────────────────────
 @app.get("/active-learning/uncertain")
 async def get_uncertain_predictions(limit: int=20, user=Depends(get_current_user)):
-    """Return predictions where the model is most uncertain (probability near 0.5)"""
     if not supabase: raise HTTPException(503,"Database not connected. Please check your configuration.")
     user_id = user.get("user_id", "anonymous")
     try:
-        # Get recent predictions near the decision boundary scoped to this user
         result = supabase.table("predictions").select(
             "id,student_id,student_name,dropout_probability,risk_level,prediction,created_at"
         ).eq("user_id", user_id).gte("dropout_probability", 0.35).lte("dropout_probability", 0.65).order(
@@ -1234,10 +1168,8 @@ async def get_uncertain_predictions(limit: int=20, user=Depends(get_current_user
         ).limit(limit * 3).execute()
 
         predictions = result.data or []
-        # Sort by closeness to 0.5
         predictions.sort(key=lambda p: abs(p["dropout_probability"] - 0.5))
 
-        # Check which ones already have labels
         labeled_ids = set()
         if predictions:
             pred_ids = [str(p["id"]) for p in predictions[:50]]
@@ -1266,7 +1198,6 @@ async def submit_label(label: ActiveLearningLabel, user=Depends(get_current_user
             "prediction_id", label.prediction_id
         ).execute()
         if existing.data:
-            # Update existing label
             result = supabase.table("active_learning_labels").update({
                 "true_label": label.true_label,
                 "labeled_by": user_id,

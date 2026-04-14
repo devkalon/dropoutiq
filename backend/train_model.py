@@ -1,13 +1,4 @@
-"""
-train_model.py  —  DropoutIQ Training Pipeline v4
-===================================================
-New in v4:
-  1. LightGBM + CatBoost models (5 base models total)
-  2. Stacking Ensemble (LR meta-learner)
-  3. SHAP interaction values → shap_interactions.json
-  4. Survival Analysis with lifelines → survival_curves.json
-  5. All previous v3 artifacts preserved
-"""
+
 
 import os, warnings, logging, json
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -103,7 +94,6 @@ FRIENDLY_NAMES = {
 
 N_TRIALS=20; N_SPLITS=5; RANDOM_SEED=42
 
-# ── 1. DATA ───────────────────────────────────────────────────────────────────
 log.info("Loading dataset...")
 df = pd.read_csv("dataset.csv", delimiter=";")
 df.columns = [c.strip() for c in df.columns]
@@ -140,12 +130,10 @@ column_map = {
 }
 df.rename(columns={k:v for k,v in column_map.items() if k in df.columns}, inplace=True)
 
-# Keep original Target string for survival analysis BEFORE converting
-df_raw_target = df["Target"].copy()  # 1=Dropout, 0=Graduate
+df_raw_target = df["Target"].copy()
 
 X = df[FEATURE_ORDER].copy(); y = df["Target"].copy()
 
-# ── 2. SPLIT ──────────────────────────────────────────────────────────────────
 X_train_raw, X_test_raw, y_train, y_test = train_test_split(
     X, y, test_size=0.20, random_state=RANDOM_SEED, stratify=y
 )
@@ -155,7 +143,6 @@ X_test_scaled  = scaler.transform(X_test_raw)
 neg=(y_train==0).sum(); pos=(y_train==1).sum(); spw=float(neg)/float(pos)
 cv=StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=RANDOM_SEED)
 
-# ── 3. LEAK-FREE CV ───────────────────────────────────────────────────────────
 def cv_auc_smote(clf, X, y):
     sm=SMOTE(random_state=RANDOM_SEED); scores=[]
     for tr,val in cv.split(X,y):
@@ -165,7 +152,6 @@ def cv_auc_smote(clf, X, y):
         scores.append(roc_auc_score(yval, c.predict_proba(Xval)[:,1]))
     return np.mean(scores)
 
-# ── 4. OBJECTIVES ─────────────────────────────────────────────────────────────
 def obj_rf(t): return cv_auc_smote(RandomForestClassifier(
     n_estimators=t.suggest_int("n_estimators",100,400),
     max_depth=t.suggest_int("max_depth",5,25),
@@ -217,7 +203,6 @@ def obj_cat(t):
         auto_class_weights="Balanced",random_seed=RANDOM_SEED,verbose=0,
     ), X_train_scaled, y_train)
 
-# ── 5. CALIBRATION SPLIT ──────────────────────────────────────────────────────
 X_base_raw, X_cal_raw, y_base, y_cal = train_test_split(
     X_train_raw, y_train, test_size=0.20, random_state=RANDOM_SEED, stratify=y_train
 )
@@ -226,7 +211,6 @@ X_cal_sc  = scaler.transform(X_cal_raw)
 sm_base = SMOTE(random_state=RANDOM_SEED)
 X_base_sm, y_base_sm = sm_base.fit_resample(X_base_sc, y_base)
 
-# ── 6. TRAIN BASE MODELS ──────────────────────────────────────────────────────
 model_configs = [
     ("RandomForest", obj_rf),
     ("XGBoost", obj_xgb),
@@ -236,7 +220,7 @@ if HAS_LGB: model_configs.append(("LightGBM", obj_lgb))
 if HAS_CAT: model_configs.append(("CatBoost", obj_cat))
 
 results = []
-trained_base_estimators = []  # for stacking
+trained_base_estimators = []
 
 for name, obj in model_configs:
     log.info(f"Training {name}...")
@@ -282,7 +266,6 @@ for name, obj in model_configs:
     trained_base_estimators.append((name, base))
     log.info(f"  {name}: CV_AUC={study.best_value:.4f}  Test_AUC={auc:.4f}")
 
-# ── 7. STACKING ENSEMBLE ──────────────────────────────────────────────────────
 log.info("Training Stacking Ensemble...")
 try:
     stack_estimators = [(name, clone(base)) for name, base in trained_base_estimators]
@@ -314,17 +297,14 @@ try:
 except Exception as e:
     log.warning(f"Stacking failed: {e}")
 
-# ── 8. SAVE COMPARISON ────────────────────────────────────────────────────────
 cdf = pd.DataFrame([{k: v for k, v in r.items() if not k.startswith("_")} for r in results])
 cdf.to_csv("models/comparison_table.csv", index=False)
 log.info("\n" + cdf.to_string(index=False))
 
-# ── 9. CHAMPION ───────────────────────────────────────────────────────────────
 best = max(results, key=lambda r: r["Test_ROC_AUC"])
 champion = best["_clf"]; base_champion = best["_base"]; champion_name = best["Model"]
 log.info(f"Champion: {champion_name}  AUC={best['Test_ROC_AUC']:.4f}")
 
-# ── 10. THRESHOLD ─────────────────────────────────────────────────────────────
 ypc = (champion.predict_proba(X_test_scaled)[:, 1]
        if hasattr(champion, "predict_proba") else stacker.predict_proba(X_test_scaled)[:, 1])
 prec, rec, thr = precision_recall_curve(y_test, ypc)
@@ -333,7 +313,6 @@ best_thresh = float(thr[np.argmax(f1s)])
 log.info(f"Threshold={best_thresh:.4f}  F1={np.max(f1s):.4f}")
 yp_tuned = (ypc >= best_thresh).astype(int)
 
-# ── 11. ROC DATA ──────────────────────────────────────────────────────────────
 roc_data = []
 for r in results:
     clf = r["_clf"]
@@ -347,7 +326,6 @@ for r in results:
     })
 with open("models/roc_curve.json", "w") as f: json.dump(roc_data, f)
 
-# ── 12. PR CURVE ──────────────────────────────────────────────────────────────
 pr_data = []
 for r in results:
     yp = r["_clf"].predict_proba(X_test_scaled)[:, 1]
@@ -361,34 +339,26 @@ for r in results:
     })
 with open("models/pr_curve.json", "w") as f: json.dump(pr_data, f)
 
-# ── 13. CONFUSION MATRIX ──────────────────────────────────────────────────────
 tn, fp, fn, tp = confusion_matrix(y_test, yp_tuned).ravel()
 with open("models/confusion_matrix.json", "w") as f:
     json.dump({"TN": int(tn), "FP": int(fp), "FN": int(fn), "TP": int(tp),
                "threshold": round(best_thresh, 4), "model": champion_name}, f)
 
-# ── 14. SHAP ──────────────────────────────────────────────────────────────────
 log.info("Computing SHAP values...")
 sm_all = SMOTE(random_state=RANDOM_SEED)
 X_all_sm, _ = sm_all.fit_resample(X_train_scaled, y_train)
-bg = shap.sample(X_all_sm, 100, random_state=RANDOM_SEED)  # smaller bg = faster
+bg = shap.sample(X_all_sm, 100, random_state=RANDOM_SEED)
 
 def _normalize_sv(sv, n_features):
-    """Force SHAP output into shape (n_samples, n_features) robustly."""
     if isinstance(sv, list):
-        # list of per-class arrays → pick class 1 (dropout)
         sv = np.array(sv[1]) if len(sv) > 1 else np.array(sv[0])
     sv = np.array(sv)
-    # Handle (n_classes, n_samples, n_features) → pick class 1
     if sv.ndim == 3:
         sv = sv[1]
-    # Handle (n_samples, n_features) — correct
     if sv.ndim == 2 and sv.shape[1] == n_features:
         return sv
-    # Handle (n_features, n_samples) → transpose
     if sv.ndim == 2 and sv.shape[0] == n_features:
         return sv.T
-    # Handle (n_samples,) or (n_classes,) — wrong, return zeros
     log.warning(f"SHAP shape {sv.shape} unrecognized for n_features={n_features}, using zeros")
     return np.zeros((1, n_features))
 
@@ -396,7 +366,6 @@ n_feat = len(FEATURE_ORDER)
 explainer = None
 sv_mat = None
 
-# Strategy 1: TreeExplainer for native tree models
 if champion_name in ("RandomForest", "XGBoost", "LightGBM", "CatBoost"):
     try:
         explainer = shap.TreeExplainer(base_champion)
@@ -407,7 +376,6 @@ if champion_name in ("RandomForest", "XGBoost", "LightGBM", "CatBoost"):
         log.warning(f"TreeExplainer failed: {e}")
         sv_mat = None
 
-# Strategy 2: LinearExplainer for LR
 if sv_mat is None and champion_name == "LogisticRegression":
     try:
         explainer = shap.LinearExplainer(base_champion, bg,
@@ -418,11 +386,9 @@ if sv_mat is None and champion_name == "LogisticRegression":
     except Exception as e:
         log.warning(f"LinearExplainer failed: {e}")
 
-# Strategy 3: KernelExplainer (slow but universal)
 if sv_mat is None or sv_mat.shape[1] != n_feat:
     try:
         log.info("Falling back to KernelExplainer (this takes ~3 min)...")
-        # Use predict (not predict_proba) to get scalar output → simpler SHAP shape
         def _dropout_prob(X):
             return base_champion.predict_proba(X)[:, 1]
         explainer = shap.KernelExplainer(_dropout_prob, bg)
@@ -432,7 +398,6 @@ if sv_mat is None or sv_mat.shape[1] != n_feat:
     except Exception as e:
         log.warning(f"KernelExplainer failed: {e}")
 
-# Strategy 4: Fall back to BEST individual base model's SHAP
 if sv_mat is None or sv_mat.shape[1] != n_feat:
     log.warning("All SHAP strategies failed for champion — falling back to best individual model")
     best_individual = max(
@@ -456,7 +421,6 @@ if sv_mat is None or sv_mat.shape[1] != n_feat:
         except Exception as e:
             log.error(f"Fallback SHAP also failed: {e}")
 
-# Final safety net
 if sv_mat is None or sv_mat.shape[1] != n_feat:
     log.error("SHAP completely unavailable — using zero importances")
     sv_mat = np.zeros((1, n_feat))
@@ -473,25 +437,18 @@ shap_global = sorted([
 with open("models/shap_global.json", "w") as f: json.dump(shap_global, f)
 log.info("shap_global.json saved")
 
-
-# ── 14b. SHAP INTERACTIONS ────────────────────────────────────────────────────
 log.info("Computing SHAP interactions (top features)...")
 try:
     if champion_name in ("RandomForest", "XGBoost"):
-        # Use a subset for speed
         n_inter = min(200, len(X_test_scaled))
         X_inter = X_test_scaled[:n_inter]
         interaction_vals = explainer.shap_interaction_values(X_inter)
-        # interaction_vals shape: (n_samples, n_features, n_features)
         if isinstance(interaction_vals, list):
             inter_mat = interaction_vals[1]
         else:
             inter_mat = interaction_vals
-        # Mean absolute interaction over samples → n_features x n_features matrix
         inter_mean = np.abs(inter_mat).mean(axis=0)
-        # Normalize
         inter_mean_norm = inter_mean / (inter_mean.max() + 1e-9)
-        # Save top-10 features x top-10 features for frontend heatmap
         top10_idx = np.argsort(mean_abs)[::-1][:10]
         top10_names = [FEATURE_ORDER[i] for i in top10_idx]
         top10_friendly = [FRIENDLY_NAMES.get(n, n) for n in top10_names]
@@ -501,7 +458,6 @@ try:
             "matrix": [[round(float(v), 4) for v in row] for row in sub],
         }
     else:
-        # Approximate: use correlation of SHAP values as interaction proxy
         sv_subset = sv_mat if len(sv_mat.shape) == 2 else sv_mat
         top10_idx = np.argsort(mean_abs)[::-1][:10]
         top10_names = [FEATURE_ORDER[i] for i in top10_idx]
@@ -517,11 +473,9 @@ try:
     log.info("shap_interactions.json saved")
 except Exception as e:
     log.warning(f"SHAP interactions failed: {e}")
-    # Write empty placeholder so endpoint doesn't 404
     with open("models/shap_interactions.json", "w") as f:
         json.dump({"features": [], "matrix": []}, f)
 
-# ── 15. CALIBRATION CURVES ────────────────────────────────────────────────────
 cal_curves = []
 for r in results:
     yp = r["_clf"].predict_proba(X_test_scaled)[:, 1]
@@ -534,18 +488,14 @@ for r in results:
 with open("models/calibration_curve.json", "w") as f: json.dump(cal_curves, f)
 log.info("calibration_curve.json saved")
 
-# ── 16. SURVIVAL ANALYSIS ─────────────────────────────────────────────────────
 if HAS_LIFELINES:
     log.info("Running survival analysis...")
     try:
-        # Use test set predictions for survival curves per risk cohort
         yp_all = champion.predict_proba(X_test_scaled)[:, 1]
         risk_cohort = np.where(yp_all >= 0.75, "Critical",
                        np.where(yp_all >= 0.55, "High",
                        np.where(yp_all >= 0.35, "Medium", "Low")))
 
-        # Simulate duration from probability (higher risk → shorter survival)
-        # Duration ∈ [1, 8] semesters
         duration_sim = np.clip(
             np.round((1 - yp_all) * 7 + 1 + np.random.default_rng(42).normal(0, 0.5, len(yp_all))),
             1, 8
@@ -589,7 +539,6 @@ else:
     with open("models/survival_curves.json", "w") as f:
         json.dump([], f)
 
-# ── 17. SAVE ALL ARTIFACTS ────────────────────────────────────────────────────
 joblib.dump(champion, "models/dropout_model.pkl")
 joblib.dump(scaler, "models/scaler.pkl")
 joblib.dump(le_target, "models/label_encoder.pkl")

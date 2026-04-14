@@ -208,7 +208,6 @@ function UserProfilePanel({ isCollapsed }) {
           "absolute bottom-full mb-2 rounded-xl bg-[#1a1d26]/95 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden z-50",
           isCollapsed ? "left-12 w-64" : "left-0 right-0"
         )}>
-          {/* Profile header */}
           <div className="px-4 py-3 border-b border-white/10 bg-white/5">
             <div className="flex items-center gap-3">
               {avatar ? (
@@ -230,7 +229,6 @@ function UserProfilePanel({ isCollapsed }) {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="p-1.5">
             <button
               onClick={() => signOut()}
@@ -251,7 +249,6 @@ export default function Layout({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
-  // Prevent scrolling when mobile drawer is open
   useEffect(() => {
     if (isMobileOpen) {
       document.body.style.overflow = 'hidden'
@@ -263,7 +260,6 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-[#1a1d26]">
-      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
@@ -271,7 +267,6 @@ export default function Layout({ children }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside 
         className={clsx(
           "bg-slate/40 backdrop-blur-2xl border-r border-white/10 flex flex-col fixed h-full z-50 shadow-[4px_0_24px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out",
@@ -279,7 +274,6 @@ export default function Layout({ children }) {
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Logo and Toggle */}
         <div className={clsx("px-4 py-4 border-b border-white/10 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-9 h-9 bg-accent/80 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20 shadow-[0_4px_12px_rgba(91,138,240,0.4)] shrink-0">
@@ -292,8 +286,7 @@ export default function Layout({ children }) {
               </div>
             )}
           </div>
-          
-          {/* Desktop Toggle Button - Show only when expanded */}
+
           {!isCollapsed && (
             <button 
               onClick={() => setIsCollapsed(true)}
@@ -304,7 +297,6 @@ export default function Layout({ children }) {
           )}
         </div>
 
-        {/* Desktop Toggle Button - Show only when collapsed */}
         {isCollapsed && (
           <div className="hidden lg:flex justify-center pb-2 pt-4">
             <button 
@@ -316,12 +308,10 @@ export default function Layout({ children }) {
           </div>
         )}
 
-        {/* Search */}
         <div className={clsx("pb-1", isCollapsed ? "pt-2" : "pt-3")}>
           <StudentSearchBar isCollapsed={isCollapsed} onExpand={() => setIsCollapsed(false)} />
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 px-3 py-2 space-y-4 overflow-y-auto no-scrollbar scroll-smooth">
           {NAV_SECTIONS.map((section, idx) => (
             <div key={idx}>
@@ -348,7 +338,6 @@ export default function Layout({ children }) {
                   >
                     {({ isActive }) => (
                       <>
-                        {/* Active Indicator Line */}
                         {isActive && (
                           <div className={clsx(
                             "absolute left-0 top-1/2 -translate-y-1/2 bg-accent rounded-r-md shadow-[0_0_8px_rgba(91,138,240,0.6)]",
@@ -368,7 +357,6 @@ export default function Layout({ children }) {
           ))}
         </nav>
 
-        {/* User Profile */}
         <div className="px-3 py-3 border-t border-white/10 shrink-0">
           {!isCollapsed && (
             <div className="flex items-center gap-2 text-xs text-cream mb-2 px-1">
@@ -380,14 +368,12 @@ export default function Layout({ children }) {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main 
         className={clsx(
           "flex-1 min-h-screen relative z-0 flex flex-col transition-all duration-300 ease-in-out",
           isCollapsed ? "lg:ml-[80px]" : "lg:ml-[250px]"
         )}
       >
-        {/* Mobile Header (Hidden on Desktop) */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-white/10 bg-[#1a1d26]/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-accent/80 rounded-lg flex items-center justify-center">
