@@ -9,7 +9,7 @@
 ![XGBoost](https://img.shields.io/badge/XGBoost-Ensemble-FF6600?style=for-the-badge)
 ![SHAP](https://img.shields.io/badge/SHAP-Explainability-important?style=for-the-badge)
 
-**A research-grade, full-stack ML platform for early identification and intervention of at-risk students using a stacking ensemble pipeline, SHAP explainability, and survival analysis.**
+**A functional, full-stack ML platform for early identification and intervention of at-risk students using a stacking ensemble pipeline, SHAP explainability, and survival analysis.**
 
 </div>
 
