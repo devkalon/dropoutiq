@@ -30,9 +30,13 @@ export default function App() {
               <p className="text-accent text-xs uppercase tracking-widest font-mono">Student Risk Intelligence v4</p>
             </div>
             <SignIn forceRedirectUrl="/dashboard" signUpForceRedirectUrl="/dashboard"
-              appearance={{ variables: { colorBackground: 'rgba(26, 29, 38, 0.4)', colorText: '#E8E6E0',
-                colorInputBackground: 'rgba(34, 38, 58, 0.3)', colorInputText: '#E8E6E0',
-                colorPrimary: '#5B8AF0', borderRadius: '0.75rem' } }} />
+              appearance={{
+                variables: {
+                  colorBackground: 'rgba(26, 29, 38, 0.4)', colorText: '#E8E6E0',
+                  colorInputBackground: 'rgba(34, 38, 58, 0.3)', colorInputText: '#E8E6E0',
+                  colorPrimary: '#5B8AF0', borderRadius: '0.75rem'
+                }
+              }} />
           </div>
         </div>
       </SignedOut>
@@ -40,19 +44,19 @@ export default function App() {
       <SignedIn>
         <Layout>
           <Routes>
-            <Route path="/"               element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard"      element={<Dashboard />} />
-            <Route path="/predict"        element={<Predict />} />
-            <Route path="/batch"          element={<BatchPredict />} />
-            <Route path="/history"        element={<History />} />
-            <Route path="/analytics"      element={<Analytics />} />
-            <Route path="/insights"       element={<ModelInsights />} />
-            <Route path="/whatif"         element={<WhatIf />} />
-            <Route path="/threshold"      element={<ThresholdOptimizer />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/predict" element={<Predict />} />
+            <Route path="/batch" element={<BatchPredict />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/insights" element={<ModelInsights />} />
+            <Route path="/whatif" element={<WhatIf />} />
+            <Route path="/threshold" element={<ThresholdOptimizer />} />
             <Route path="/students/:studentId" element={<StudentDetail />} />
-            <Route path="/fairness"       element={<FairnessAudit />} />
+            <Route path="/fairness" element={<FairnessAudit />} />
             <Route path="/counterfactuals" element={<Counterfactuals />} />
-            <Route path="/survival"       element={<SurvivalAnalysis />} />
+            <Route path="/survival" element={<SurvivalAnalysis />} />
             <Route path="/active-learning" element={<ActiveLearning />} />
           </Routes>
         </Layout>
@@ -60,3 +64,5 @@ export default function App() {
     </>
   )
 }
+
+//final push
