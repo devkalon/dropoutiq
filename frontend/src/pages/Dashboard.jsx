@@ -35,8 +35,8 @@ function StatCard({ icon: Icon, label, value, sub, color = 'accent', loading }) 
   const colorMap = {
     accent: { bg: 'bg-accent/10', text: 'text-accent', glow: 'shadow-accent/20' },
     danger: { bg: 'bg-danger/10', text: 'text-danger', glow: 'shadow-danger/20' },
-    warn:   { bg: 'bg-warn/10',   text: 'text-warn',   glow: 'shadow-warn/20' },
-    safe:   { bg: 'bg-safe/10',   text: 'text-safe',   glow: 'shadow-safe/20' },
+    warn: { bg: 'bg-warn/10', text: 'text-warn', glow: 'shadow-warn/20' },
+    safe: { bg: 'bg-safe/10', text: 'text-safe', glow: 'shadow-safe/20' },
   }
   const c = colorMap[color]
   return (
@@ -156,8 +156,8 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold text-cream">Student Risk Dashboard</h1>
-          <p className="text-ghost text-sm mt-1">AI-powered dropout risk intelligence — DropoutIQ v4</p>
+          <h1 className="text-3xl font-bold text-cream">Student Dropout Prediction Dashboard</h1>
+          <p className="text-ghost text-sm mt-1">AI-powered dropout risk intelligence — DropoutIQ</p>
         </div>
         <div className="flex gap-3">
           <Link to="/predict" className="btn-primary text-xs flex items-center gap-2 px-4 py-2">
@@ -171,11 +171,11 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4 mb-8">
-        <StatCard icon={Users}         label="Total Students Analyzed" value={summary?.total ?? 0}    color="accent" loading={loading} />
-        <StatCard icon={AlertCircle}   label="Predicted Dropouts"       value={summary?.dropouts ?? 0} color="danger" loading={loading}
-                  sub={summary ? `${Math.round((summary.dropouts / (summary.total || 1)) * 100)}% of total` : ''} />
-        <StatCard icon={AlertTriangle} label="Critical Cases"           value={summary?.critical ?? 0} color="warn"   loading={loading} />
-        <StatCard icon={TrendingUp}    label="Avg Risk Score"           value={summary ? `${summary.avg_risk}%` : '—'} color="safe" loading={loading} />
+        <StatCard icon={Users} label="Total Students Analyzed" value={summary?.total ?? 0} color="accent" loading={loading} />
+        <StatCard icon={AlertCircle} label="Predicted Dropouts" value={summary?.dropouts ?? 0} color="danger" loading={loading}
+          sub={summary ? `${Math.round((summary.dropouts / (summary.total || 1)) * 100)}% of total` : ''} />
+        <StatCard icon={AlertTriangle} label="Critical Cases" value={summary?.critical ?? 0} color="warn" loading={loading} />
+        <StatCard icon={TrendingUp} label="Avg Risk Score" value={summary ? `${summary.avg_risk}%` : '—'} color="safe" loading={loading} />
       </div>
 
       {/* Charts Row */}
@@ -206,7 +206,7 @@ export default function Dashboard() {
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
                 <Legend iconType="circle" iconSize={8}
-                        wrapperStyle={{ fontSize: '11px', color: '#888' }} />
+                  wrapperStyle={{ fontSize: '11px', color: '#888' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -232,9 +232,9 @@ export default function Dashboard() {
               <YAxis tick={{ fontSize: 10, fill: '#666' }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
               <Area type="monotone" dataKey="dropouts" name="Dropouts"
-                    stroke="#E05252" fill="url(#grad-drop)" strokeWidth={2} dot={false} />
+                stroke="#E05252" fill="url(#grad-drop)" strokeWidth={2} dot={false} />
               <Area type="monotone" dataKey="graduates" name="Graduates"
-                    stroke="#3DBE7A" fill="url(#grad-grad)" strokeWidth={2} dot={false} />
+                stroke="#3DBE7A" fill="url(#grad-grad)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

@@ -27,7 +27,7 @@ export default function App() {
           <div className="w-full max-w-md relative z-10 p-8 rounded-2xl bg-slate/40 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
             <div className="text-center mb-8 flex flex-col items-center">
               <h1 className="font-display font-bold text-4xl text-cream mb-2 tracking-wide">DropoutIQ</h1>
-              <p className="text-accent text-xs uppercase tracking-widest font-mono">Student Risk Intelligence v4</p>
+              <p className="text-accent text-xs uppercase tracking-widest font-mono">Student Dropout Prediction</p>
             </div>
             <SignIn forceRedirectUrl="/dashboard" signUpForceRedirectUrl="/dashboard"
               appearance={{

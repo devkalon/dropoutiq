@@ -10,59 +10,59 @@ import {
 import clsx from 'clsx'
 
 /* ── Label maps for UX (no more raw code numbers!) ─────────────────────────── */
-const MARITAL_STATUS = [{v:1,l:"Single"},{v:2,l:"Married"},{v:3,l:"Widower"},{v:4,l:"Divorced"},{v:5,l:"Facto Union"},{v:6,l:"Legally Separated"}]
-const ATTENDANCE = [{v:1,l:"Daytime"},{v:0,l:"Evening"}]
-const YES_NO = [{v:0,l:"No"},{v:1,l:"Yes"}]
-const YES_NO_REV = [{v:1,l:"Yes"},{v:0,l:"No"}]
-const GENDER = [{v:1,l:"Male"},{v:0,l:"Female"}]
-const TUITION = [{v:1,l:"Yes, paid up"},{v:0,l:"No, overdue"}]
+const MARITAL_STATUS = [{ v: 1, l: "Single" }, { v: 2, l: "Married" }, { v: 3, l: "Widower" }, { v: 4, l: "Divorced" }, { v: 5, l: "Facto Union" }, { v: 6, l: "Legally Separated" }]
+const ATTENDANCE = [{ v: 1, l: "Daytime" }, { v: 0, l: "Evening" }]
+const YES_NO = [{ v: 0, l: "No" }, { v: 1, l: "Yes" }]
+const YES_NO_REV = [{ v: 1, l: "Yes" }, { v: 0, l: "No" }]
+const GENDER = [{ v: 1, l: "Male" }, { v: 0, l: "Female" }]
+const TUITION = [{ v: 1, l: "Yes, paid up" }, { v: 0, l: "No, overdue" }]
 const COURSES = [
-  {v:33,l:"Biofuel Production Technologies"},{v:171,l:"Animation and Multimedia Design"},
-  {v:8014,l:"Social Service (evening)"},{v:9003,l:"Agronomy"},{v:9070,l:"Communication Design"},
-  {v:9085,l:"Veterinary Nursing"},{v:9119,l:"Informatics Engineering"},{v:9130,l:"Equinculture"},
-  {v:9147,l:"Management"},{v:9238,l:"Social Service"},{v:9254,l:"Tourism"},{v:9500,l:"Nursing"},
-  {v:9556,l:"Oral Hygiene"},{v:9670,l:"Advertising and Marketing Management"},
-  {v:9773,l:"Journalism and Communication"},{v:9853,l:"Basic Education"},
-  {v:9991,l:"Management (evening)"},
+  { v: 33, l: "Government" }, { v: 171, l: "Animation and Multimedia Design" },
+  { v: 8014, l: "Social Service (evening)" }, { v: 9003, l: "Agronomy" }, { v: 9070, l: "Communication Design" },
+  { v: 9085, l: "Veterinary Nursing" }, { v: 9119, l: "Informatics Engineering" }, { v: 9130, l: "Equinculture" },
+  { v: 9147, l: "Management" }, { v: 9238, l: "Social Service" }, { v: 9254, l: "Tourism" }, { v: 9500, l: "Nursing" },
+  { v: 9556, l: "Oral Hygiene" }, { v: 9670, l: "Advertising and Marketing Management" },
+  { v: 9773, l: "Journalism and Communication" }, { v: 9853, l: "Basic Education" },
+  { v: 9991, l: "Management (evening)" },
 ]
 const APPLICATION_MODE = [
-  {v:1,l:"1st phase - general"},{v:2,l:"Ordinance 612/93"},{v:5,l:"1st phase - Azores"},
-  {v:7,l:"Holders of higher courses"},{v:10,l:"Ordinance 854-B/99"},{v:15,l:"International (bachelor)"},
-  {v:16,l:"1st phase - Madeira"},{v:17,l:"2nd phase - general"},{v:18,l:"3rd phase - general"},
-  {v:39,l:"Over 23 years old"},{v:42,l:"Transfer"},{v:43,l:"Change of course"},
-  {v:44,l:"Tech specialization diploma"},{v:51,l:"Change of institution"},{v:53,l:"Short cycle diploma"},
-  {v:57,l:"Change of institution (International)"},
+  { v: 1, l: "1st phase - general" }, { v: 2, l: "Ordinance 612/93" }, { v: 5, l: "1st phase - Azores" },
+  { v: 7, l: "Holders of higher courses" }, { v: 10, l: "Ordinance 854-B/99" }, { v: 15, l: "International (bachelor)" },
+  { v: 16, l: "1st phase - Madeira" }, { v: 17, l: "2nd phase - general" }, { v: 18, l: "3rd phase - general" },
+  { v: 39, l: "Over 23 years old" }, { v: 42, l: "Transfer" }, { v: 43, l: "Change of course" },
+  { v: 44, l: "Tech specialization diploma" }, { v: 51, l: "Change of institution" }, { v: 53, l: "Short cycle diploma" },
+  { v: 57, l: "Change of institution (International)" },
 ]
 const PREV_QUAL = [
-  {v:1,l:"Secondary education"},{v:2,l:"Bachelor's degree"},{v:3,l:"Degree"},{v:4,l:"Master's"},
-  {v:5,l:"Doctorate"},{v:6,l:"Higher education frequency"},{v:9,l:"12th year - not completed"},
-  {v:10,l:"11th year - not completed"},{v:14,l:"10th year"},{v:19,l:"Basic 3rd cycle"},
-  {v:38,l:"Basic 2nd cycle"},{v:39,l:"Technological specialization"},{v:40,l:"Degree 1st cycle"},
-  {v:42,l:"Professional higher technical"},{v:43,l:"Master 2nd cycle"},
+  { v: 1, l: "Secondary education" }, { v: 2, l: "Bachelor's degree" }, { v: 3, l: "Degree" }, { v: 4, l: "Master's" },
+  { v: 5, l: "Doctorate" }, { v: 6, l: "Higher education frequency" }, { v: 9, l: "12th year - not completed" },
+  { v: 10, l: "11th year - not completed" }, { v: 14, l: "10th year" }, { v: 19, l: "Basic 3rd cycle" },
+  { v: 38, l: "Basic 2nd cycle" }, { v: 39, l: "Technological specialization" }, { v: 40, l: "Degree 1st cycle" },
+  { v: 42, l: "Professional higher technical" }, { v: 43, l: "Master 2nd cycle" },
 ]
 const QUALIFICATION = [
-  {v:1,l:"Secondary Education"},{v:2,l:"Bachelor's"},{v:3,l:"Degree"},{v:4,l:"Master's"},
-  {v:5,l:"Doctorate"},{v:6,l:"Higher education frequency"},{v:9,l:"12th year incomplete"},
-  {v:10,l:"11th year incomplete"},{v:19,l:"Basic 3rd cycle"},{v:34,l:"Unknown"},
-  {v:35,l:"Cannot read or write"},{v:37,l:"Basic 1st cycle"},{v:38,l:"Basic 2nd cycle"},
-  {v:40,l:"Degree 1st cycle"},{v:43,l:"Master 2nd cycle"},{v:44,l:"Doctorate 3rd cycle"},
+  { v: 1, l: "Secondary Education" }, { v: 2, l: "Bachelor's" }, { v: 3, l: "Degree" }, { v: 4, l: "Master's" },
+  { v: 5, l: "Doctorate" }, { v: 6, l: "Higher education frequency" }, { v: 9, l: "12th year incomplete" },
+  { v: 10, l: "11th year incomplete" }, { v: 19, l: "Basic 3rd cycle" }, { v: 34, l: "Unknown" },
+  { v: 35, l: "Cannot read or write" }, { v: 37, l: "Basic 1st cycle" }, { v: 38, l: "Basic 2nd cycle" },
+  { v: 40, l: "Degree 1st cycle" }, { v: 43, l: "Master 2nd cycle" }, { v: 44, l: "Doctorate 3rd cycle" },
 ]
 const OCCUPATION = [
-  {v:0,l:"Student"},{v:1,l:"Executive/Director"},{v:2,l:"Intellectual/Scientific"},
-  {v:3,l:"Technical/Associate Prof"},{v:4,l:"Administrative"},{v:5,l:"Services/Security"},
-  {v:6,l:"Agriculture/Fishing"},{v:7,l:"Skilled Trades"},{v:8,l:"Machine Operators"},
-  {v:9,l:"Unskilled Workers"},{v:10,l:"Armed Forces"},{v:90,l:"Other"},{v:99,l:"Blank/Unknown"},
-  {v:122,l:"Healthcare"},{v:123,l:"Teachers"},{v:131,l:"Science Technicians"},
-  {v:132,l:"Health Technicians"},{v:141,l:"Office Assistants"},{v:151,l:"Personal care"},
-  {v:152,l:"Sellers"},{v:171,l:"Construction"},{v:172,l:"Metalworking"},
-  {v:191,l:"Cleaning workers"},{v:192,l:"Unskilled agriculture"},
+  { v: 0, l: "Student" }, { v: 1, l: "Executive/Director" }, { v: 2, l: "Intellectual/Scientific" },
+  { v: 3, l: "Technical/Associate Prof" }, { v: 4, l: "Administrative" }, { v: 5, l: "Services/Security" },
+  { v: 6, l: "Agriculture/Fishing" }, { v: 7, l: "House Wife" }, { v: 8, l: "Machine Operators" },
+  { v: 9, l: "Unskilled Workers" }, { v: 10, l: "Armed Forces" }, { v: 90, l: "Other" }, { v: 99, l: "Blank/Unknown" },
+  { v: 122, l: "Healthcare" }, { v: 123, l: "Teachers" }, { v: 131, l: "Science Technicians" },
+  { v: 132, l: "Health Technicians" }, { v: 141, l: "Office Assistants" }, { v: 151, l: "Personal care" },
+  { v: 152, l: "Sellers" }, { v: 171, l: "Construction" }, { v: 172, l: "Metalworking" },
+  { v: 191, l: "Cleaning workers" }, { v: 192, l: "Unskilled agriculture" },
 ]
 const NATIONALITY = [
-  {v:1,l:"Portuguese"},{v:2,l:"German"},{v:6,l:"Spanish"},{v:11,l:"Italian"},{v:13,l:"Dutch"},
-  {v:14,l:"English"},{v:17,l:"Lithuanian"},{v:21,l:"Angolan"},{v:22,l:"Cape Verdean"},
-  {v:24,l:"Guinean"},{v:25,l:"Mozambican"},{v:26,l:"Santomean"},{v:32,l:"Turkish"},
-  {v:41,l:"Brazilian"},{v:62,l:"Romanian"},{v:100,l:"Moldovan"},{v:101,l:"Mexican"},
-  {v:103,l:"Ukrainian"},{v:105,l:"Russian"},{v:108,l:"Cuban"},{v:109,l:"Colombian"},
+  { v: 1, l: "INDIAN" }, { v: 2, l: "German" }, { v: 6, l: "Spanish" }, { v: 11, l: "Italian" }, { v: 13, l: "Dutch" },
+  { v: 14, l: "English" }, { v: 17, l: "Lithuanian" }, { v: 21, l: "Angolan" }, { v: 22, l: "Cape Verdean" },
+  { v: 24, l: "Guinean" }, { v: 25, l: "Mozambican" }, { v: 26, l: "Santomean" }, { v: 32, l: "Turkish" },
+  { v: 41, l: "Brazilian" }, { v: 62, l: "Romanian" }, { v: 100, l: "Moldovan" }, { v: 101, l: "Mexican" },
+  { v: 103, l: "Ukrainian" }, { v: 105, l: "Russian" }, { v: 108, l: "Cuban" }, { v: 109, l: "Colombian" },
 ]
 
 const SECTIONS = [
@@ -209,7 +209,7 @@ function SHAPBar({ value, max }) {
 function InterventionBadge({ score }) {
   const color = score >= 70 ? 'text-danger bg-danger/10 border-danger/30'
     : score >= 45 ? 'text-warn bg-warn/10 border-warn/30'
-    : 'text-safe bg-safe/10 border-safe/30'
+      : 'text-safe bg-safe/10 border-safe/30'
   return (
     <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs font-mono ${color}`}>
       ⚡ Intervention Score: {score}/100
@@ -387,7 +387,7 @@ export default function Predict() {
       const token = await getToken()
       const blob = await api.downloadPdfInstant(form, token)
       const name = form.student_name || 'student'
-      downloadBlob(blob, `report_${name.replace(/\s+/g,'_')}.pdf`)
+      downloadBlob(blob, `report_${name.replace(/\s+/g, '_')}.pdf`)
     } catch (err) {
       setError('PDF generation failed: ' + (err.message || 'Unknown error. Make sure the backend is running.'))
     } finally {
@@ -423,9 +423,9 @@ export default function Predict() {
               <button type="submit" disabled={loading}
                 className="btn-primary w-full flex justify-center gap-2 shadow-lg hover:scale-[1.01] transition-all">
                 {loading ? (
-                  <><Loader2 className="animate-spin" size={16} />Running AI Analysis...</>
+                  <><Loader2 className="animate-spin" size={16} />Running DropOut Prediction...</>
                 ) : (
-                  <><Brain size={16} />Run AI Prediction</>
+                  <><Brain size={16} />Run DropOut Prediction</>
                 )}
               </button>
             </div>
