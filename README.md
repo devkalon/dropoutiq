@@ -548,9 +548,9 @@ After running `train_model.py`, the following files are saved to `backend/models
 
 | Name | Institution |
 |---|---|---|
-| **Kartik G** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560072 |
-| **Kalavathi V A** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560072 |
-| **Pruthvi N K** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560072 |
+| **Kartik G** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560078 |
+| **Kalavathi V A** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560078 |
+| **Pruthvi N K** | RV Institute of Technology and Management, Bengaluru, Karnataka — 560078 |
 
 > Developed on **Student Dropout Prediction** using real-world higher education data.
 
