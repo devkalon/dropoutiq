@@ -42,3 +42,6 @@ logs/
 
 # ── Jupyter ───────────────────────────────────────
 .ipynb_checkpoints/
+
+test-1.csv
+test-2.csv
